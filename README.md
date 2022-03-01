@@ -1,5 +1,3 @@
-# MOVED TO https://github.com/wowarenalogs/pvp-tooltips-addon
-
 # PvP Tooltips
 
 ## Generated Files
