@@ -1,5 +1,5 @@
 WOW_VERSION="90200"
-ADDON_VERSION="3.0.1"
+ADDON_VERSION="3.1.0"
 
 node --loader ts-node/esm --experimental-specifier-resolution=node ingest.ts
 rm -rf build

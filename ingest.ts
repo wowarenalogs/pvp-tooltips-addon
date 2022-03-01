@@ -1,5 +1,5 @@
 var fs = require("fs");
-const FILEPATH = "../../simc/SpellDataDump/allspells.txt";
+const FILEPATH = "../simc/SpellDataDump/allspells.txt";
 const MAX_SCAN_DEPTH = 25;
 
 const simcSpellDumpData = fs.readFileSync(FILEPATH, "utf8");
