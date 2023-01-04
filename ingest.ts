@@ -32,6 +32,12 @@ type SpellInfo = {
   affectedByChain: number[];
   pvpModifiersFromTriggers: PvPModifier[];
   pvpModifiersFromAffectors: PvPModifier[];
+
+  duration: number | null;
+  cooldown: number | null;
+  charges: number | null;
+  chargesCooldown: number | null;
+  gcd: number | null;
 };
 
 console.log("Loaded", FILEPATH);
@@ -57,6 +63,31 @@ function parseNameLine(line: string) {
   return { spellId: parseInt(spellInfo.spellId), name: spellInfo.spellName };
 }
 
+function maybeGetChargesInfo(s: string | undefined | null) {
+  // "charges": "2 (45 seconds cooldown)",
+  if (!s) return null;
+  try {
+    const parts = s.replace("(", "").split(" ");
+    return {
+      charges: parseFloat(parts[0]),
+      chargesCooldown: parseFloat(parts[1]),
+    };
+  } catch (err) {
+    console.log(`failed ${s} ${(err as unknown as Error).message}`);
+    return null;
+  }
+}
+
+function maybeGetNumber(s: string | undefined | null) {
+  if (!s) return null;
+  try {
+    return parseFloat(s.split(" ").at(0) || "");
+  } catch (err) {
+    console.log(`failed ${s} ${(err as unknown as Error).message}`);
+    return null;
+  }
+}
+
 function makeEmptySpellInfo(): SpellInfo {
   return {
     spellId: -1,
@@ -69,6 +100,11 @@ function makeEmptySpellInfo(): SpellInfo {
     pvpModifiersFromTriggers: [],
     pvpModifiersFromAffectors: [],
     azeritePowerId: "",
+    duration: null,
+    cooldown: null,
+    charges: null,
+    chargesCooldown: null,
+    gcd: null,
   };
 }
 let currentSpellInfo: SpellInfo = makeEmptySpellInfo();
@@ -82,21 +118,31 @@ for (let i = 0; i < lines.length; i++) {
     currentSpellInfo.name = parsedNameLine.name;
     currentSpellInfo.spellId = parsedNameLine.spellId;
   }
-  // if (line.search("^GCD  ") > -1) {
-  //   currentSpellInfo.gcd = /\s*GCD\s*: (.*) seconds/.exec(line)[1];
-  // }
+  if (line.search("^GCD  ") > -1) {
+    currentSpellInfo.gcd = maybeGetNumber(
+      /\s*GCD\s*: (.*) seconds/.exec(line)?.at(1)
+    );
+  }
   // if (line.search("^Class  ") > -1) {
   //   currentSpellInfo.class = /\s*Class\s*: (.*)/.exec(line)[1];
   // }
-  // if (line.search("^Duration  ") > -1) {
-  //   currentSpellInfo.duration = /\s*Duration\s*: (.*)/.exec(line)[1];
-  // }
-  // if (line.search("^Cooldown   ") > -1) {
-  //   currentSpellInfo.cooldown = /\s*Cooldown\s*: (.*)/.exec(line)[1];
-  // }
-  // if (line.search("^Charges") > -1) {
-  //   currentSpellInfo.charges = /\s*Charges\s*: (.*)/.exec(line)[1];
-  // }
+  if (line.search("^Duration  ") > -1) {
+    currentSpellInfo.duration = maybeGetNumber(
+      /\s*Duration\s*: (.*)/.exec(line)?.at(1)
+    );
+  }
+  if (line.search("^Cooldown   ") > -1) {
+    currentSpellInfo.cooldown = maybeGetNumber(
+      /\s*Cooldown\s*: (.*)/.exec(line)?.at(1)
+    );
+  }
+  if (line.search("^Charges") > -1) {
+    const info = maybeGetChargesInfo(/\s*Charges\s*: (.*)/.exec(line)?.at(1));
+    if (info) {
+      currentSpellInfo.charges = info.charges;
+      currentSpellInfo.chargesCooldown = info.chargesCooldown;
+    }
+  }
   if (line.search("^Azerite Power Id") > -1) {
     const azGrep = /\s*Azerite Power Id\s*: (.*)/.exec(line);
     currentSpellInfo.azeritePowerId = azGrep && azGrep[1] ? azGrep[1] : "";
